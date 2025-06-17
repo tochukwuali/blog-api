@@ -1,0 +1,29 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Optional: Test coverage
+coverage/
+
+# Optional: VS Code settings
+.vscode/
+
+# Optional: Build artifacts
+dist/
+build/
+
+# Optional: Local database dump or temp files
+dump/
+tmp/
+*.local
