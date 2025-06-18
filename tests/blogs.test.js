@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const app = require('../app');
 const User = require('../models/User');
 const Blog = require('../models/Blog');
+require('dotenv').config({ path: '.env.test' });
 
 let token = '';
 let blogId = '';
@@ -59,8 +60,8 @@ describe('Blog API Tests', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body.blogs)).toBe(true);
-    expect(res.body.blogs.length).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
   });
 
   it('should update a blog', async () => {
@@ -72,7 +73,7 @@ describe('Blog API Tests', () => {
       });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.title).toBe('Updated Title');
+    expect(res.body.blog.title).toBe('Updated Title');
   });
 
   it('should publish a blog', async () => {
@@ -81,7 +82,7 @@ describe('Blog API Tests', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.state).toBe('published');
+    expect(res.body.blog.state).toBe('published');
   });
 
   it('should list public published blogs', async () => {
@@ -89,8 +90,8 @@ describe('Blog API Tests', () => {
       .get('/api/blogs?page=1&limit=10');
 
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body.blogs)).toBe(true);
-    expect(res.body.blogs.length).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
   });
 
   it('should get single published blog and increment read_count', async () => {
@@ -105,6 +106,8 @@ describe('Blog API Tests', () => {
     const res = await request(app)
       .delete(`/api/blogs/${blogId}`)
       .set('Authorization', `Bearer ${token}`);
+
+      console.log(res.body);
 
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Blog deleted successfully');

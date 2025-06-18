@@ -1,4 +1,5 @@
 const Blog = require('../models/Blog');
+const calculateReadingTime = require('../utils/readingTime');
 const readingTime = require('../utils/readingTime');
 
 exports.createBlog = async (req, res) => {
@@ -18,22 +19,32 @@ exports.createBlog = async (req, res) => {
   }
 };
 
-exports.getPublishedBlogs = async (req, res) => {
-  const { page = 1, limit = 20, title, tags, author, order_by } = req.query;
-  const filter = { state: 'published' };
-  if (title) filter.title = new RegExp(title, 'i');
-  if (tags) filter.tags = { $in: tags.split(',') };
-  if (author) filter.author = new RegExp(author, 'i');
-  const sort = {};
-  if (order_by) sort[order_by] = -1;
 
-  const blogs = await Blog.find(filter)
-    .sort(sort)
-    .skip((page - 1) * limit)
-    .limit(Number(limit))
-    .populate('author', 'first_name last_name email');
-  res.json(blogs);
+exports.getPublishedBlogs = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, title, tags, author, order_by } = req.query;
+
+    const filter = { state: 'published' };
+    if (title) filter.title = new RegExp(title, 'i');
+    if (tags) filter.tags = { $in: tags.split(',') };
+    if (author) filter.author = new RegExp(author, 'i');
+
+    const sort = {};
+    if (order_by) sort[order_by] = -1;
+
+    const blogs = await Blog.find(filter)
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .populate('author', 'first_name last_name email');
+
+    res.status(200).json(blogs);
+  } catch (error) {
+    console.error('Error fetching published blogs:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
+
 
 exports.getSingleBlog = async (req, res) => {
   try {
@@ -46,17 +57,29 @@ exports.getSingleBlog = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+// controllers/blogController.js
+
 exports.deleteBlog = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
-    if (!blog) return res.status(404).json({ error: 'Blog not found' });
-    if (blog.author.toString() !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
-    await blog.remove();
+
+    if (!blog) {
+      return res.status(404).json({ message: 'Blog not found' });
+    }
+
+    if (blog.author.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized to delete this blog' });
+    }
+
+    await blog.deleteOne();
     res.status(200).json({ message: 'Blog deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+  } catch (error) {
+    console.error('Delete blog error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
+
 
 exports.getUserBlogs = async (req, res) => {
   try {
